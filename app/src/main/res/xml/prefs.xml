@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <com.jenzz.materialpreference.PreferenceCategory android:title="通用">
+        <com.jenzz.materialpreference.SwitchPreference
+            android:defaultValue="true"
+            android:key="preference_recite_open_jit"
+            android:title="@string/open_jit_or_nor"/>
+
+        <com.jenzz.materialpreference.SwitchPreference
+            android:defaultValue="false"
+            android:key="preference_auto_play_sound"
+            android:summary="@string/play_sound_auto_summary"
+            android:title="@string/play_sound_auto"/>
+
+        <!--<com.jenzz.materialpreference.SwitchPreference-->
+        <!--android:key="preference_notify_dayline"-->
+        <!--android:title="@string/notify_dayline"-->
+        <!--android:summary="@string/notify_dayline_summary"-->
+        <!--android:defaultValue="true"/>-->
+
+        <com.jenzz.materialpreference.SwitchPreference
+            android:defaultValue="false"
+            android:key="preference_auto_paste_words"
+            android:summary="@string/open_auto_paste_summary"
+            android:title="@string/open_auto_paste"/>
+
+    </com.jenzz.materialpreference.PreferenceCategory>
+
+    <com.jenzz.materialpreference.PreferenceCategory
+        android:key="category_recite_word"
+        android:title="背单词">
+        <com.jenzz.materialpreference.SwitchPreference
+            android:defaultValue="false"
+            android:key="preference_use_recite_or_not"
+            android:summary="@string/use_recite_or_nor_summary"
+            android:title="@string/use_recite_or_nor"/>
+        <!--<name.gudong.translate.widget.ThumbSelectPreference-->
+            <!--android:key="preference_thp_show_time"-->
+            <!--android:summary="提示显示时的停留时长"-->
+            <!--android:title="@string/tip_time_duration"/>-->
+
+        <com.jenzz.materialpreference.Preference
+            android:dependency="preference_use_recite_or_not"
+            android:key="preference_recite_time"
+            android:summary="背单词时两次显示的间隔时间"
+            android:title="背单词提示间隔时间"/>
+        <com.jenzz.materialpreference.Preference
+            android:key="preference_show_time"
+            android:summary="提示显示时的停留时长"
+            android:title="@string/tip_time_duration"/>
+
+    </com.jenzz.materialpreference.PreferenceCategory>
+</PreferenceScreen>

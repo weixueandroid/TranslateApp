@@ -20,27 +20,43 @@
 
 package name.gudong.translate.mvp.model;
 
-import com.orhanobut.logger.Logger;
-import me.gudong.translate.BuildConfig;
-import name.gudong.translate.mvp.model.entity.AbsResult;
-import name.gudong.translate.mvp.model.entity.BaiDuResult;
-import name.gudong.translate.mvp.model.entity.JinShanResult;
-import name.gudong.translate.mvp.model.entity.YouDaoResult;
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.inject.Inject;
+
+import name.gudong.translate.BuildConfig;
+import name.gudong.translate.mvp.model.entity.translate.AbsResult;
+import name.gudong.translate.mvp.model.entity.translate.BaiDuResult;
+import name.gudong.translate.mvp.model.entity.translate.GoogleResult;
+import name.gudong.translate.mvp.model.entity.translate.JinShanResult;
+import name.gudong.translate.mvp.model.entity.translate.YouDaoResult;
 import name.gudong.translate.mvp.model.type.ETranslateFrom;
 import name.gudong.translate.util.SignUtils;
+import okhttp3.ResponseBody;
 import rx.Observable;
 import rx.functions.Func1;
 
 /**
  * Created by GuDong on 1/22/16 10:37.
  * Contact with gudong.name@gmail.com.
+ *
+ * Updated by Levine on 2/22/17 add google translation
  */
 public class WarpAipService {
 
-    static ApiService mApiService;
+    private  ApiBaidu mApiBaidu;
+    private  ApiYouDao mApiYouDao;
+    private  ApiJinShan mApiJinShan;
+    private  ApiGoogle mApiGoogle;
 
-    public WarpAipService(ApiService apiService) {
-        mApiService = apiService;
+    @Inject
+    public WarpAipService(ApiBaidu mApiBaidu, ApiJinShan mApiJinShan, ApiYouDao mApiYouDao, ApiGoogle mApiGoogle) {
+        this.mApiBaidu = mApiBaidu;
+        this.mApiJinShan = mApiJinShan;
+        this.mApiYouDao = mApiYouDao;
+        this.mApiGoogle = mApiGoogle;
     }
 
     public Observable<AbsResult> translate(ETranslateFrom way, String query) {
@@ -48,7 +64,7 @@ public class WarpAipService {
         query = query.toLowerCase();
         switch (way){
             case YOU_DAO:
-                resultObservable = mApiService.translateYouDao(
+                resultObservable = mApiYouDao.translateYouDao(
                         query,
                         BuildConfig.YOUDAO_USERNAME,
                         BuildConfig.YOUDAO_KEY,
@@ -63,7 +79,7 @@ public class WarpAipService {
                         });
                 break;
             case JIN_SHAN:
-                resultObservable = mApiService.translateJinShan(
+                resultObservable = mApiJinShan.translateJinShan(
                         query,
                         //JINSHAN_FANYI_KEY
                         BuildConfig.ICIBA_KEY,
@@ -78,9 +94,7 @@ public class WarpAipService {
             case BAI_DU:
                 String salt = SignUtils.getRandomInt(10);
                 String sign = SignUtils.getSign(BuildConfig.BAIDU_APP_ID, query, salt, BuildConfig.BAIDU_SCREAT_KEY);
-                Logger.i(salt);
-                Logger.i(sign);
-                resultObservable = mApiService.translateBaiDu(
+                resultObservable = mApiBaidu.translateBaiDu(
                         query,
                         BuildConfig.LANGUAGE_AUTO,
                         BuildConfig.LANGUAGE_AUTO,
@@ -91,6 +105,33 @@ public class WarpAipService {
                             @Override
                             public Observable<AbsResult> call(BaiDuResult result) {
                                 return Observable.just(result);
+                            }
+                        });
+                break;
+            case GOOGLE:
+                String targetLanguage;
+                //String patternWords = "[a-zA-Z1-9 ]{1,}";
+                String patternWords = "[\u4e00-\u9fa5 ]{1,}";
+                Pattern r = Pattern.compile(patternWords);
+                Matcher m = r.matcher(query);
+                if(!m.matches()){
+                    targetLanguage = BuildConfig.GOOGLE_LANGUAGE_CHINEASE;
+                }
+                else {
+                    targetLanguage = BuildConfig.GOOGLE_LANGUAGE_ENGLISH;
+                }
+
+                resultObservable = mApiGoogle.translateGoogle(query, targetLanguage)
+                        .flatMap(new Func1<ResponseBody, Observable<AbsResult>>() {
+                            @Override
+                            public Observable<AbsResult> call(ResponseBody result) {
+                                GoogleResult googleResult = new GoogleResult();
+                                try{
+                                    googleResult.setTranslationResult(result.string());
+                                }catch (IOException e){
+                                    e.printStackTrace();
+                                }
+                                return Observable.just(googleResult);
                             }
                         });
                 break;
